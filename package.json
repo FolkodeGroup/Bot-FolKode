@@ -4,14 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+  "dev": "vite",
+  "build": "vite build", 
+  "preview": "vite preview",
+  "setup": "npm install && echo 'Recuerda configurar tu GEMINI_API_KEY en .env.local'",
+  "validate-env": "node scripts/validate-env.js"
   },
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "@google/genai": "latest",
+    "@google/genai": "^0.7.1",
     "react-markdown": "^9.0.0",
     "remark-gfm": "^4.0.0"
   },

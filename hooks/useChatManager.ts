@@ -105,33 +105,52 @@ export const useChatManager = ({ language, user, isConversationMode, onAnalytics
       }
     };
 
-    await geminiService.sendMessageStream(chatSession, userMessage, personalityPrefix, (chunk) => {
-        if (!firstChunkReceived) {
-            const newBotMessage: Message = {
-                id: botMessageId,
-                sender: 'bot',
-                text: chunk,
-                timestamp: Date.now(),
-            };
-            setMessages(prev => [...prev, newBotMessage]);
-            firstChunkReceived = true;
-        } else {
-            setMessages(prev => prev.map(msg => 
-                msg.id === botMessageId ? { ...msg, text: (msg.text || '') + chunk } : msg
-            ));
-        }
-    }, (fullText) => {
-        setIsLoading(false);
-        setMessages(prev => prev.filter(msg => msg.id !== botMessageId));
-        const finalBotMessage: Message = {
-            id: botMessageId,
-            sender: 'bot',
-            text: fullText,
-            timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, finalBotMessage]);
-        handleMessageCompletion(fullText);
-    });
+try {
+  await geminiService.sendMessageStream(chatSession, userMessage, personalityPrefix, (chunk) => {
+      if (!firstChunkReceived) {
+          const newBotMessage: Message = {
+              id: botMessageId,
+              sender: 'bot',
+              text: chunk,
+              timestamp: Date.now(),
+          };
+          setMessages(prev => [...prev, newBotMessage]);
+          firstChunkReceived = true;
+      } else {
+          setMessages(prev => prev.map(msg => 
+              msg.id === botMessageId ? { ...msg, text: (msg.text || '') + chunk } : msg
+          ));
+      }
+  }, (fullText) => {
+      setIsLoading(false);
+      setMessages(prev => prev.filter(msg => msg.id !== botMessageId));
+      const finalBotMessage: Message = {
+          id: botMessageId,
+          sender: 'bot',
+          text: fullText,
+          timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, finalBotMessage]);
+      handleMessageCompletion(fullText);
+  });
+} catch (error) {
+  console.error('❌ Error al conectar con Gemini API:', error);
+  setIsLoading(false);
+  
+  // Remover mensaje de loading si existe
+  setMessages(prev => prev.filter(msg => msg.id !== botMessageId));
+  
+  // Mostrar mensaje de error al usuario
+  const errorMessage: Message = {
+    id: `bot-error-${Date.now()}`,
+    sender: 'bot',
+    text: language ? 
+      `❌ Error de conexión con la IA. Posibles causas:\n• API key inválida o expirada\n• Límite de uso excedido\n• Problema de conectividad\n\nVerifica tu GEMINI_API_KEY en .env.local` :
+      `❌ AI connection error. Check your GEMINI_API_KEY in .env.local`,
+    timestamp: Date.now(),
+  };
+  setMessages(prev => [...prev, errorMessage]);
+}
 
   }, [chatSession, language, user]);
   
